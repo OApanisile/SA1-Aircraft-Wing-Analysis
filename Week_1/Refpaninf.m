@@ -18,11 +18,6 @@ function [infa, infb] = refpaninf(del, X, Yin)
         Y = Yin;
     end
 
-    % Precompute reused terms
-    X1 = X;
-    X2 = X - del;
-    Y2 = Y^2;
-
     % Calculating I0
     I0 = -(1 / (4 * pi)) * ( ...
         X*log(X^2 + Y^2) - ...

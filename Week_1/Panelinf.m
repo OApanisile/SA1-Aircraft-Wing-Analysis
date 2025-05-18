@@ -1,14 +1,11 @@
-del = 1.5;
-X = 2;
-Yin = 1.5;
-xmin = -2.5;
-xmax = 2.5;
-ymin = -2;
-ymax = 2;
 nv = 100;
 nx = 51;
 ny = 41;
 c1 = -0.15:0.05:0.15;
+xa = 4.1; 
+xb = 2.2; 
+ya = 1.3;
+yb = 2.9;
 
 function [infa, infb] = panelinf(xa, ya, xb, yb, x, y)
     % Vector from A to B
@@ -27,93 +24,89 @@ function [infa, infb] = panelinf(xa, ya, xb, yb, x, y)
     
     % Transform field point to panel coordinates
     X = rx * t(1) + ry * t(2);
-    Y = rx * n(1) + ry * n(2);
+    Yin = rx * n(1) + ry * n(2);
 
-    
     if abs(Yin) < 1e-5
         Y = 1e-5;
     else
         Y = Yin;
     end
 
-    % Precompute reused terms
-    X1 = X;
-    X2 = X - del;
-    Y2 = Y^2;
-
     % Calculating I0
     I0 = -(1 / (4 * pi)) * ( ...
         X*log(X^2 + Y^2) - ...
-        (X-del)*log((X-del)^2 + Y^2) - ...
-        2*del + ...
-        2*Y*(atan(X/Y) - atan((X - del) / Y)) );
+        (X-L)*log((X-L)^2 + Y^2) - ...
+        2*L + ...
+        2*Y*(atan(X/Y) - atan((X - L) / Y)) );
 
     % Calculating I1
     I1 = 1/(8 * pi) * ((X^2 + Y^2) * log(X^2 + Y^2) ...
-    - ((X - del)^2 + Y^2) * log((X - del)^2 + Y^2) ...
-    - 2 * X * del + del^2);
+    - ((X - L)^2 + Y^2) * log((X - L)^2 + Y^2) ...
+    - 2 * X * L + L^2);
 
     % Influence coefficient fa
-    infa = (I0*(1-(X/del)) - (I1/del));
+    infa = (I0*(1-(X/L)) - (I1/L));
 
     % Influence coefficient fb
-    infb = (I0*(X/del) + (I1/del));
+    infb = (I0*(X/L) + (I1/L));
   
 end
-% Panel endpoints
-xa = 4.1; ya = 1.3;
-xb = 2.2; yb = 2.9;
-
-% Domain grid for field points
-[x, y] = meshgrid(linspace(1, 6, 100), linspace(0, 5, 100));
-fa = zeros(size(x));
-fb = zeros(size(x));
-
-% Evaluate influence at each point
-for i = 1:size(x,1)
-    for j = 1:size(x,2)
-        [fa(i,j), fb(i,j)] = panelinf(xa, ya, xb, yb, x(i,j), y(i,j));
+ 
+% Generate grid and compute influence cofficients
+for i = 1:nx
+    for j = 1:ny
+        xm(i,j) = xa + (i-1)*(xb-xa)/(nx-1);
+        ym(i,j) = ya + (j-1)*(yb-ya)/(ny-1);
+        [infa(i,j), infb(i,j)] = panelinf(xa, ya, xb, yb, xm(i,j), ym(i,j));
     end
 end
 
-% Plot exact contours
-figure;
-subplot(2,2,1);
-contour(x, y, fa, 50);
-title('Exact f_a');
-axis equal; colorbar;
+% Plot fa
+figure(1)
+contour(xm', ym', infa', c1)
+xlabel('x'), ylabel('y')
+title('Influence Coefficient f_a')
+axis equal
 
-subplot(2,2,2);
-contour(x, y, fb, 50);
-title('Exact f_b');
-axis equal; colorbar;
+% Plot fb in a separate figure
+figure(2)
+contour(xm', ym', infb', c1)
+xlabel('x'), ylabel('y')
+title('Influence Coefficient f_b')
+axis equal
 
-% Approximate using multiple point vortices (e.g., 10)
-n = 10;
-s = linspace(0, 1, n);
-xp = xa + (xb - xa) * s;
-yp = ya + (yb - ya) * s;
+yc = 0;
+Gamma = 3.0;
+c2 = -0.4:0.2:1.2;
 
-% Assume uniform strength distribution and compute total influence
-fap = zeros(size(x));
-fbp = zeros(size(x));
+function psixy = psipv(xc, yc, Gamma, x, y)
+    r_2 = (x - xc)^2 + (y - yc)^2;   % Distance from vortex center
+    if r_2 == 0
+        error('Field point (x, y) cannot be exactly at the vortex location (xc, yc).');
+    end
+    psixy = -Gamma / (4 * pi) * log(r_2);
+end 
 
-for k = 1:n
-    rx = x - xp(k);
-    ry = y - yp(k);
-    r2 = rx.^2 + ry.^2;
-    fa_k = -ry ./ (2*pi*r2);
-    fb_k = rx ./ (2*pi*r2);
-    fap = fap + fa_k;
-    fbp = fbp + fb_k;
+% Generate grid and compute streamfunction
+for k = 1:nv
+    s = (k - 0.5) / nv;  % Midpoints of segments
+    xc(k) = xa + s * (xb - xa);
+    yc(k) = ya + s * (yb - ya);
+
+    for i = 1:nx
+        for j = 1:ny
+            psi(i,j,k) = psipv(xc(k), yc, Gamma, xm(i,j), ym(i,j));
+        end
+    end
 end
 
-subplot(2,2,3);
-contour(x, y, fap, 50);
-title('Approx. f_a (point vortices)');
-axis equal; colorbar;
+psitot = sum(psi, 3);
 
-subplot(2,2,4);
-contour(x, y, fbp, 50);
-title('Approx. f_b (point vortices)');
-axis equal; colorbar;
+psi(:,:,1)
+
+% Plot streamfunction contours
+figure(3)
+contour(xm', ym', psitot', c2)  % Use transpose psi' for correct orientation
+xlabel('x'), ylabel('y')
+title('Streamfunction of a Point Vortex')
+axis equal

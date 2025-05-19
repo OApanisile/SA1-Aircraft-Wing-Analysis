@@ -11,11 +11,18 @@ xmax = 5;
 ymin = 0;
 ymax = 4;
 
+% Vector from A to B
+dx = xb - xa;
+dy = yb - ya;
+
+L = sqrt(dx^2 + dy^2);  % Panel length
 
 function [infa, infb] = panelinf(xa, ya, xb, yb, x, y)
+   
     % Vector from A to B
     dx = xb - xa;
     dy = yb - ya;
+
     L = sqrt(dx^2 + dy^2);  % Panel length
     
     % Unit tangent and normal vectors
@@ -97,21 +104,46 @@ for k = 1:nv
     s = (k - 0.5) / nv;  % Midpoints of segments
     xc(k) = xa + s * (xb - xa);
     yc(k) = ya + s * (yb - ya);
+    g_a = 1;
+    g_b = 0;
+    Gamma(k) = (k*(g_a - g_b)/nv)*(L/nv);
 
     for i = 1:nx
         for j = 1:ny
-            psi(i,j,k) = psipv(xc(k), yc, Gamma, xm(i,j), ym(i,j));
+            psi1(i,j,k) = psipv(xc(k), yc(k), Gamma(k), xm(i,j), ym(i,j));
         end
     end
 end
 
-psitot = sum(psi, 3);
+% Generate grid and compute streamfunction
+for k = 1:nv
+    s = (k - 0.5) / nv;  % Midpoints of segments
+    xc(k) = xa + s * (xb - xa);
+    yc(k) = ya + s * (yb - ya);
+    g_a = 0;
+    g_b = 1;
+    Gamma(k) = (k*(g_b - g_a)/nv)*(L/nv);
 
-psi(:,:,1)
+    for i = 1:nx
+        for j = 1:ny
+            psi2(i,j,k) = psipv(xc(k), yc(k), Gamma(k), xm(i,j), ym(i,j));
+        end
+    end
+end
+
+infa_approx = sum(psi1, 3);
+infb_approx = sum(psi2, 3);
 
 % Plot streamfunction contours
 figure(3)
-contour(xm', ym', psitot', c2)  % Use transpose psi' for correct orientation
+contour(xm', ym', infa_approx', c1)  % Use transpose psi' for correct orientation
 xlabel('x'), ylabel('y')
-title('Streamfunction of a Point Vortex')
+title('Approximate Influence Coefficient f_a')
+axis equal
+
+% Plot streamfunction contours
+figure(4)
+contour(xm', ym', infb_approx', c1)  % Use transpose psi' for correct orientation
+xlabel('x'), ylabel('y')
+title('Approximate Influence Coefficient f_b')
 axis equal

@@ -21,7 +21,6 @@ ys = sin(theta);  % y-coordinates of panel endpoints
 % Step (ii): Define vortex sheet strength at panel edges
 g = -2 * sin(theta);  % vortex sheet strength
 
-
 function [infa, infb] = panelinf(xa, ya, xb, yb, x, y)
     % Vector from A to B
     dx = xb - xa;
@@ -66,8 +65,6 @@ function [infa, infb] = panelinf(xa, ya, xb, yb, x, y)
     infb = (I0*(X/L) + (I1/L));
   
 end
-
-
 
 function lhsmat = build_lhs(xs, ys)
     np = length(xs) - 1;             % Number of panels

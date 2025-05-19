@@ -6,6 +6,11 @@ xa = 4.1;
 xb = 2.2; 
 ya = 1.3;
 yb = 2.9;
+xmin = 0;
+xmax = 5;
+ymin = 0;
+ymax = 4;
+
 
 function [infa, infb] = panelinf(xa, ya, xb, yb, x, y)
     % Vector from A to B
@@ -55,8 +60,8 @@ end
 % Generate grid and compute influence cofficients
 for i = 1:nx
     for j = 1:ny
-        xm(i,j) = xa + (i-1)*(xb-xa)/(nx-1);
-        ym(i,j) = ya + (j-1)*(yb-ya)/(ny-1);
+        xm(i,j) = xmin + (i-1)*(xmax-xmin)/(nx-1);
+        ym(i,j) = ymin + (j-1)*(ymax-ymin)/(ny-1);
         [infa(i,j), infb(i,j)] = panelinf(xa, ya, xb, yb, xm(i,j), ym(i,j));
     end
 end

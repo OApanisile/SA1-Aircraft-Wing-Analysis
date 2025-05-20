@@ -72,8 +72,8 @@ for i = 1:nx
         ym(i,j) = ymin + (j-1)*(ymax-ymin)/(ny-1);
         psi(i,j) = ym(i,j);
         for p = 1:np
-            [infa(i,j), infb(i,j)] = panelinf(xs(p), ys(p), xs(p-1), ys(p-1), xm(i,j), ym(i,j));
-            psi(i,j) = psi(i,j) + (g(p)*infa(i,j)) + (g(p-1)*infb(i,j));
+            [infa(i,j), infb(i,j)] = panelinf(xs(p), ys(p), xs(p+1), ys(p+1), xm(i,j), ym(i,j));
+            psi(i,j) = psi(i,j) + (g(p)*infa(i,j)) + (g(p+1)*infb(i,j));
         end
     end
 end

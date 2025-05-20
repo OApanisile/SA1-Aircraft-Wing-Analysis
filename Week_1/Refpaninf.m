@@ -73,10 +73,10 @@ for k = 1:nv
     xc(k) = (del/nv)/2 + (k - 1)*(del/nv);
     g_a = 1;
     g_b = 0;
-    Gamma(k) = (k(g_a - g_b)/nv)*(del/nv);
+    Gamma(k) = (k*(g_a - g_b)/nv)*(del/nv);
     for i = 1:nx
         for j = 1:ny
-            psi1(i,j,k) = psipv(xc(k), yc, Gamma(k), xm(i,j), ym(i,j));
+            psi1(i,j,k) = psipv(xc(nv+1-k), yc, Gamma(k), xm(i,j), ym(i,j));
         end
     end
 end
@@ -86,7 +86,7 @@ for k = 1:nv
     xc(k) = (del/nv)/2 + (k - 1)*(del/nv);
     g_a = 0;
     g_b = 1;
-    Gamma(k) = (k(g_b - g_a)/nv)*(del/nv);
+    Gamma(k) = (k*(g_b - g_a)/nv)*(del/nv);
     for i = 1:nx
         for j = 1:ny
             psi2(i,j,k) = psipv(xc(k), yc, Gamma(k), xm(i,j), ym(i,j));

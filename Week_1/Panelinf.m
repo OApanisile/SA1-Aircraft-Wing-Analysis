@@ -99,27 +99,27 @@ function psixy = psipv(xc, yc, Gamma, x, y)
     psixy = -Gamma / (4 * pi) * log(r_2);
 end 
 
-% Generate grid and compute streamfunction
 for k = 1:nv
     s = (k - 0.5) / nv;  % Midpoints of segments
     xc(k) = xa + s * (xb - xa);
     yc(k) = ya + s * (yb - ya);
+end
+
+% Generate grid and compute streamfunction
+for k = 1:nv
     g_a = 1;
     g_b = 0;
     Gamma(k) = (k*(g_a - g_b)/nv)*(L/nv);
 
     for i = 1:nx
         for j = 1:ny
-            psi1(i,j,k) = psipv(xc(k), yc(k), Gamma(k), xm(i,j), ym(i,j));
+            psi1(i,j,k) = psipv(xc(nv+1-k), yc(nv+1-k), Gamma(k), xm(i,j), ym(i,j));
         end
     end
 end
 
 % Generate grid and compute streamfunction
 for k = 1:nv
-    s = (k - 0.5) / nv;  % Midpoints of segments
-    xc(k) = xa + s * (xb - xa);
-    yc(k) = ya + s * (yb - ya);
     g_a = 0;
     g_b = 1;
     Gamma(k) = (k*(g_b - g_a)/nv)*(L/nv);

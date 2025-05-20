@@ -1,3 +1,4 @@
+% Parameters
 nv = 100;
 nx = 51;
 ny = 41;
@@ -17,137 +18,164 @@ theta = (0:np) * 2 * pi / np;
 xs = cos(theta); % x-coordinates of panel endpoints
 ys = sin(theta); % y-coordinates of panel endpoints
 
+% --- Helper Functions ---
+
 function [infa, infb] = refpaninf(del, X, Yin)
-    
     if abs(Yin) < 1e-5
         Y = 1e-5;
     else
         Y = Yin;
     end
     
-    % Calculating I0
     I0 = -(1 / (4 * pi)) * ( ...
         X*log(X^2 + Y^2) - ...
         (X-del)*log((X-del)^2 + Y^2) - ...
         2*del + ...
         2*Y*(atan(X/Y) - atan((X - del) / Y)) );
     
-    % Calculating I1
     I1 = 1/(8 * pi) * ((X^2 + Y^2) * log(X^2 + Y^2) ...
         - ((X - del)^2 + Y^2) * log((X - del)^2 + Y^2) ...
         - 2 * X * del + del^2);
     
-    % Influence coefficient fa
     infa = (I0*(1-(X/del)) - (I1/del));
-    
-    % Influence coefficient fb
     infb = (I0*(X/del) + (I1/del));
-
 end
 
 function [infa, infb] = panelinf(xa, ya, xb, yb, x, y)
-    % Vector from A to B
     dx = xb - xa;
     dy = yb - ya;
-    L = sqrt(dx^2 + dy^2); % Panel length
-    
-    % Unit tangent and normal vectors
+    L = sqrt(dx^2 + dy^2);
     t = [dx, dy] / L;
-    n = [-dy, dx] / L; % Rotate tangent vector 90 degrees CCW
-    
-    % Vector from A to field point
+    n = [-dy, dx] / L;
     rx = x - xa;
     ry = y - ya;
-    
-    % Transform field point to panel coordinates
     X = rx * t(1) + ry * t(2);
     Y = rx * n(1) + ry * n(2);
-    
-    [infa,infb] = refpaninf(L,X,Y);
-
+    [infa, infb] = refpaninf(L, X, Y);
 end
 
-function lhsmat = build_lhs(xs,ys)
+function lhsmat = build_lhs(xs, ys)
     np = length(xs) - 1;
-    psip = zeros(np,np+1); %Initialise matrix to reduce computation times
-
-    for i=1:np
-        for j=1:np+1
+    psip = zeros(np, np+1);
+    for i = 1:np
+        for j = 1:np+1
             if j == 1
-                [infa,infb] = panelinf(xs(j),ys(j),xs(j+1),ys(j+1),xs(i),ys(i));
+                [infa, ~] = panelinf(xs(j), ys(j), xs(j+1), ys(j+1), xs(i), ys(i));
                 psip(i,j) = infa;
-
-            elseif j == np+1 %Accounts for index out of bounds
-                [infa1,infb1] = panelinf(xs(j-1),ys(j-1),xs(j),ys(j),xs(i),ys(i));
+            elseif j == np+1
+                [~, infb1] = panelinf(xs(j-1), ys(j-1), xs(j), ys(j), xs(i), ys(i));
                 psip(i,j) = infb1;
             else
-                [infa,infb] = panelinf(xs(j),ys(j),xs(j+1),ys(j+1),xs(i),ys(i));
-                [infa1,infb1] = panelinf(xs(j-1),ys(j-1),xs(j),ys(j),xs(i),ys(i));
+                [infa, ~] = panelinf(xs(j), ys(j), xs(j+1), ys(j+1), xs(i), ys(i));
+                [~, infb1] = panelinf(xs(j-1), ys(j-1), xs(j), ys(j), xs(i), ys(i));
                 psip(i,j) = infa + infb1;
             end
-        end 
-    end %Looping over all the points around the cylinder measuring the contribution from each`point vortex onto one single point of the cylinder
+        end
+    end
 
-    %Kutta Condition
-
-    lhsmat = zeros(np+1,np+1);
-    lhsmat(1, [1:3,np-1:np]) = [2, -2, 1, -1, 2];
-    lhsmat(np+1,[2:3,np-1:np+1]) = [-2, 1, -1, 2, -2];
-
-    for i=2:np
-        for j=1:np+1
+    lhsmat = zeros(np+1, np+1);
+    lhsmat(1, [1:3, np-1:np]) = [2, -2, 1, -1, 2];
+    lhsmat(np+1, [2:3, np-1:np+1]) = [-2, 1, -1, 2, -2];
+    for i = 2:np
+        for j = 1:np+1
             lhsmat(i,j) = psip(i,j) - psip(i-1,j);
         end
-    end %Set our lhs matrix to the difference of the streamfunctions contribution due to the pannels of two consecutive points
+    end
 end
 
-function rhsvec = build_rhs(xs,ys,alpha)
-    %build_rhs Obtains the rhs the Streamfunction and gamma equation
-    
-    np = length(xs) - 1; %Number of panels we are dividing the cylinder into
-    rhsvec = zeros(np+1,1); %Initialise the vector to reduce computation times
-    psi = zeros(np+1,1);
-    
-    for i = 1:np+1
-        psi(i) = ys(i)*cos(alpha) - xs(i)*sin(alpha); %Free stream contribution to the streamfunction
-    end
-
+function rhsvec = build_rhs(xs, ys, alpha)
+    np = length(xs) - 1;
+    rhsvec = zeros(np+1, 1);
+    psi = ys*cos(alpha) - xs*sin(alpha);
     for i = 2:np
-        rhsvec(i) = psi(i-1) - psi(i); %The rhs of our equation will be the difference between the free stream contributions between two consecutive points
+        rhsvec(i) = psi(i-1) - psi(i);
     end
 end
 
-A = zeros(np+1,np+1);
-b_0 = zeros(np+1,1);
-b_a = zeros(np+1,1);
+% --- Build System ---
+A = build_lhs(xs, ys);
+b_0 = build_rhs(xs, ys, 0);
+b_a = build_rhs(xs, ys, alpha);
 
-A = build_lhs(xs,ys);
-b_0 = build_rhs(xs,ys,0);
-b_a = build_rhs(xs,ys,alpha);
+gam_0 = A \ b_0;
+gam_a = A \ b_a;
 
-gam_0 = A\b_0;
-gam_a = A\b_a;
+% --- Compute Circulations ---
+circulation_0 = sum(gam_0) * (2*pi/np);
+circulation_a = sum(gam_a) * (2*pi/np);
 
-circulation_0 = 0;
-circulation_a = 0;
+% --- Plot Gamma Distributions ---
+figure(1)
+plot(theta/pi, gam_0)
+xlabel('theta/\pi'), ylabel('\gamma_0')
+title('Surface Velocity \gamma vs \theta/\pi for \alpha = 0')
+axis([0 2 -2.5 2.5])
 
-L = 2*pi/(np);
+figure(2)
+plot(theta/pi, gam_a)
+xlabel('theta/\pi'), ylabel('\gamma_a')
+title('Surface Velocity \gamma vs \theta/\pi for \alpha = 0.1')
+axis([0 2 -2.5 2.5])
 
-for i = 1:np+1
-    circulation_0 = circulation_0 + gam_0(i)*L;
-    circulation_a = circulation_a + gam_a(i)*L;
+% --- Compute and Plot Streamfunctions ---
+[xg, yg] = meshgrid(linspace(xmin, xmax, nx), linspace(ymin, ymax, ny));
+psitot_0 = zeros(size(xg));
+psitot_a = zeros(size(xg));
+
+% alpha = 0
+for i = 1:size(xg,1)
+    for j = 1:size(xg,2)
+        x = xg(i,j);
+        y = yg(i,j);
+        if sqrt(x^2 + y^2) < 1
+            psitot_0(i,j) = NaN;
+            continue
+        end
+        psi_free = y;
+        psi_ind = 0;
+        for k = 1:np
+            [fa, fb] = panelinf(xs(k), ys(k), xs(k+1), ys(k+1), x, y);
+            psi_ind = psi_ind + gam_0(k)*fa + gam_0(k+1)*fb;
+        end
+        psitot_0(i,j) = psi_free + psi_ind;
+    end
 end
 
-% Plot psi
-figure(1)
-plot(theta/pi,gam_0)
-xlabel('gam_0'), ylabel('theta/pi')
-title('Suface Velocity(gamma) vs Non-Dimensionalised theta for alpha = 0')
-axis ([0 2 -2.5 2.5])
+% alpha = 0.1
+for i = 1:size(xg,1)
+    for j = 1:size(xg,2)
+        x = xg(i,j);
+        y = yg(i,j);
+        if sqrt(x^2 + y^2) < 1
+            psitot_a(i,j) = NaN;
+            continue
+        end
+        psi_free = y*cos(alpha) - x*sin(alpha);
+        psi_ind = 0;
+        for k = 1:np
+            [fa, fb] = panelinf(xs(k), ys(k), xs(k+1), ys(k+1), x, y);
+            psi_ind = psi_ind + gam_a(k)*fa + gam_a(k+1)*fb;
+        end
+        psitot_a(i,j) = psi_free + psi_ind;
+    end
+end
 
-% Plot psi
-figure(2)
-plot(theta/pi,gam_a)
-xlabel('gam_a'), ylabel('theta/pi')
-title('Suface Velocity(gamma) vs Non-Dimensionalised theta for alpha = 0.1')
-axis ([0 2 -2.5 2.5])
+% Plot alpha = 0
+figure(3)
+contour(xg, yg, psitot_0, 50)
+hold on
+plot(cos(theta), sin(theta), 'k')
+xlabel('x'), ylabel('y')
+title('Total Streamfunction \psi + \psi_p (\alpha = 0)')
+axis equal
+grid on
+
+% Plot alpha = 0.1
+figure(4)
+contour(xg, yg, psitot_a, 50)
+hold on
+plot(cos(theta), sin(theta), 'k')
+xlabel('x'), ylabel('y')
+title('Total Streamfunction \psi + \psi_p (\alpha = 0.1)')
+axis equal
+grid on

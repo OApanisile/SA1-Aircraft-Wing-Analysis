@@ -10,7 +10,6 @@ xmin = -2.5;
 xmax = 2.5;
 ymin = -2;
 ymax = 2;
-alpha = 0;
 
 % Step (i): Define the cylinder panels
 np = 100;
@@ -72,8 +71,8 @@ function lhsmat = build_lhs(xs, ys)
 
     % Loop over control points
     for i = 1:np
-        xi = xs(i);                  
-        yi = ys(i);                  % Control point at panel edge
+        xi = 0.5 * (xs(i) + xs(i+1));
+        yi = 0.5 * (ys(i) + ys(i+1));
 
         % Loop over all panels
         for j = 1:np
@@ -108,40 +107,26 @@ end
 
 lhsmat = build_lhs(xs, ys);
 
+function rhsvec = build_rhs(xs, ys, alpha)
+    np = length(xs) - 1;
+    rhsvec = zeros(np+1, 1);  % Column vector
 
+    % Freestream streamfunction at control points (panel starting points)
+    for i = 1:np-1
+        xi = xs(i);
+        yi = ys(i);
+        psi_fs1 = yi * cos(alpha) - xi * sin(alpha);
 
-function rhsvec = build_rhs(xs,ys,alpha)
-    np = length(xs) - 1;             % Number of panels
-    psifs = zeros(np+1, 1);          % Intermediate vector
+        xi1 = xs(i+1);
+        yi1 = ys(i+1);
+        psi_fs2 = yi1 * cos(alpha) - xi1 * sin(alpha);
 
-    % Loop over control points
-    for i = 1:np
-
-        % Loop over all panels
-        for j = 1:np
-            xj1 = xs(j);
-            yj1 = ys(j);
-            xj2 = xs(j+1);
-            yj2 = ys(j+1);
-
-            % Get freestream psi
-            psifs1 = yj1*cos(alpha) - xj1*sin(alpha);
-            psifs2 = yj2*cos(alpha) - xj2*sin(alpha);
-
-            % Fill vector
-            psifs(i, 1) = psifs1 - psifs2;
-        end
+        rhsvec(i) = psi_fs1 - psi_fs2;
     end
 
-    % Initialising final vector
-    rhsvec = zeros(101, 1);
-
-    % Copy calculated part (np equations)
-    rhsvec(1:np+1,1) = psifs;
-
-    % Final two rows: closure conditions
-    rhsvec(1,1) = 0;
-    rhsvec(end,1) = 0;
+    % Boundary conditions
+    rhsvec(np) = 0;      % psi(np+1) = psi(1)
+    rhsvec(np+1) = 0;    % gamma(1) = 0
 end
 
 rhsvec = build_rhs(xs,ys,alpha);

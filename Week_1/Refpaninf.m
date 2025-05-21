@@ -68,28 +68,35 @@ function psixy = psipv(xc, yc, Gamma, x, y)
     psixy = -Gamma / (4 * pi) * log(r_2);
 end 
 
-% Generate grid and compute streamfunction
+% Precompute vortex positions and strengths for fa and fb approximations
+g_a = 1;
+g_b = 0;
 for k = 1:nv
-    xc(k) = (del/nv)/2 + (k - 1)*(del/nv);
-    g_a = 1;
-    g_b = 0;
-    Gamma(k) = (k*(g_a - g_b)/nv)*(del/nv);
+    xc_fa(k) = (del/nv)/2 + (k - 1)*(del/nv);
+    Gamma_fa(k) = (k*(g_a - g_b)/nv)*(del/nv);
+end
+
+% Compute fa approximation
+for k = 1:nv
     for i = 1:nx
         for j = 1:ny
-            psi1(i,j,k) = psipv(xc(nv+1-k), yc, Gamma(k), xm(i,j), ym(i,j));
+            psi1(i,j,k) = psipv(xc_fa(nv+1-k), yc, Gamma_fa(k), xm(i,j), ym(i,j));
         end
     end
 end
 
-
+g_a = 0;
+g_b = 1;
 for k = 1:nv
-    xc(k) = (del/nv)/2 + (k - 1)*(del/nv);
-    g_a = 0;
-    g_b = 1;
-    Gamma(k) = (k*(g_b - g_a)/nv)*(del/nv);
+    xc_fb(k) = (del/nv)/2 + (k - 1)*(del/nv);
+    Gamma_fb(k) = (k*(g_b - g_a)/nv)*(del/nv);
+end
+
+% Compute fb approximation
+for k = 1:nv
     for i = 1:nx
         for j = 1:ny
-            psi2(i,j,k) = psipv(xc(k), yc, Gamma(k), xm(i,j), ym(i,j));
+            psi2(i,j,k) = psipv(xc_fb(k), yc, Gamma_fb(k), xm(i,j), ym(i,j));
         end
     end
 end

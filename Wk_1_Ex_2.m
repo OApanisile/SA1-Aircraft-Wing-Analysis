@@ -8,34 +8,6 @@ nx = 51;
 ny = 41;
 c = -0.15:0.05:0.15;
 yc = 0;
-
-function [infa, infb] = refpaninf(del, X, Yin)
-    
-    if abs(Yin) < 1e-5
-        Y = 1e-5;
-    else
-        Y = Yin;
-    end
-
-    % Calculating I0
-    I0 = -(1 / (4 * pi)) * ( ...
-        X*log(X^2 + Y^2) - ...
-        (X-del)*log((X-del)^2 + Y^2) - ...
-        2*del + ...
-        2*Y*(atan(X/Y) - atan((X - del) / Y)) );
-
-    % Calculating I1
-    I1 = 1/(8 * pi) * ((X^2 + Y^2) * log(X^2 + Y^2) ...
-    - ((X - del)^2 + Y^2) * log((X - del)^2 + Y^2) ...
-    - 2 * X * del + del^2);
-
-    % Influence coefficient fa
-    infa = (I0*(1-(X/del)) - (I1/del));
-
-    % Influence coefficient fb
-    infb = (I0*(X/del) + (I1/del));
-  
-end
  
 % Generate grid and compute influence cofficients
 for i = 1:nx
@@ -59,14 +31,6 @@ contour(xm', ym', infb', c)
 xlabel('x'), ylabel('y')
 title('Influence Coefficient f_b')
 axis equal
-
-function psixy = psipv(xc, yc, Gamma, x, y)
-    r_2 = (x - xc)^2 + (y - yc)^2;   % Distance from vortex center
-    if r_2 == 0
-        error('Field point (x, y) cannot be exactly at the vortex location (xc, yc).');
-    end
-    psixy = -Gamma / (4 * pi) * log(r_2);
-end 
 
 % Precompute vortex positions and strengths for fa and fb approximations
 g_a = 1;

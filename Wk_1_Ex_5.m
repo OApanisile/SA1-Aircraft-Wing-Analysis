@@ -18,80 +18,6 @@ theta = (0:np) * 2 * pi / np;
 xs = cos(theta); % x-coordinates of panel endpoints
 ys = sin(theta); % y-coordinates of panel endpoints
 
-% --- Helper Functions ---
-
-function [infa, infb] = refpaninf(del, X, Yin)
-    if abs(Yin) < 1e-5
-        Y = 1e-5;
-    else
-        Y = Yin;
-    end
-    
-    I0 = -(1 / (4 * pi)) * ( ...
-        X*log(X^2 + Y^2) - ...
-        (X-del)*log((X-del)^2 + Y^2) - ...
-        2*del + ...
-        2*Y*(atan(X/Y) - atan((X - del) / Y)) );
-    
-    I1 = 1/(8 * pi) * ((X^2 + Y^2) * log(X^2 + Y^2) ...
-        - ((X - del)^2 + Y^2) * log((X - del)^2 + Y^2) ...
-        - 2 * X * del + del^2);
-    
-    infa = (I0*(1-(X/del)) - (I1/del));
-    infb = (I0*(X/del) + (I1/del));
-end
-
-function [infa, infb] = panelinf(xa, ya, xb, yb, x, y)
-    dx = xb - xa;
-    dy = yb - ya;
-    L = sqrt(dx^2 + dy^2);
-    t = [dx, dy] / L;
-    n = [-dy, dx] / L;
-    rx = x - xa;
-    ry = y - ya;
-    X = rx * t(1) + ry * t(2);
-    Y = rx * n(1) + ry * n(2);
-    [infa, infb] = refpaninf(L, X, Y);
-end
-
-function lhsmat = build_lhs(xs, ys)
-    np = length(xs) - 1;
-    psip = zeros(np, np+1);
-    for i = 1:np
-        for j = 1:np+1
-            if j == 1
-                [infa, ~] = panelinf(xs(j), ys(j), xs(j+1), ys(j+1), xs(i), ys(i));
-                psip(i,j) = infa;
-            elseif j == np+1
-                [~, infb1] = panelinf(xs(j-1), ys(j-1), xs(j), ys(j), xs(i), ys(i));
-                psip(i,j) = infb1;
-            else
-                [infa, ~] = panelinf(xs(j), ys(j), xs(j+1), ys(j+1), xs(i), ys(i));
-                [~, infb1] = panelinf(xs(j-1), ys(j-1), xs(j), ys(j), xs(i), ys(i));
-                psip(i,j) = infa + infb1;
-            end
-        end
-    end
-
-    lhsmat = zeros(np+1, np+1);
-    lhsmat(1, [1:3, np-1:np]) = [2, -2, 1, -1, 2];
-    lhsmat(np+1, [2:3, np-1:np+1]) = [-2, 1, -1, 2, -2];
-    for i = 2:np
-        for j = 1:np+1
-            lhsmat(i,j) = psip(i,j) - psip(i-1,j);
-        end
-    end
-end
-
-function rhsvec = build_rhs(xs, ys, alpha)
-    np = length(xs) - 1;
-    rhsvec = zeros(np+1, 1);
-    psi = ys*cos(alpha) - xs*sin(alpha);
-    for i = 2:np
-        rhsvec(i) = psi(i-1) - psi(i);
-    end
-end
-
 % --- Build System ---
 A = build_lhs(xs, ys);
 b_0 = build_rhs(xs, ys, 0);
@@ -103,6 +29,10 @@ gam_a = A \ b_a;
 % --- Compute Circulations ---
 circulation_0 = sum(gam_0) * (2*pi/np);
 circulation_a = sum(gam_a) * (2*pi/np);
+
+fprintf('circulation_0 = %.4f\n', circulation_0)
+fprintf('circulation_a = %.4f\n', circulation_a)
+
 
 % --- Plot Gamma Distributions ---
 figure(1)

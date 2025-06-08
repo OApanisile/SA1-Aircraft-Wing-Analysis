@@ -9,7 +9,7 @@ function [xs ys] = make_upanels ( xsin, ysin, np )
 
 %  calculate distance around foil of each input point
 npin = length(xsin)-1;
-dsin = sqrt ( (xsin(2:npin+1)-xsin(1:npin)).^2 + ...
+dsin = sqrt ((xsin(2:npin+1)-xsin(1:npin)).^2 + ...
                      (ysin(2:npin+1)-ysin(1:npin)).^2);
 essin(1) = 0;
 essin(2:npin+1) = cumsum(dsin);

@@ -1,7 +1,6 @@
 clear
 
 global Re ue0 duedx;
-
 Re = 10^5;
 duedx = -0.39; % Critical velocity gradient is between -0.38 and -0.39
 ue0 = 1;

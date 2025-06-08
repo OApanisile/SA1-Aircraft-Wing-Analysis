@@ -35,6 +35,7 @@ i = 1;
 Re_theta = zeros(1,n);
 
 while laminar && i < n
+    
     i = i + 1;
     f2 = f2 + ueintbit(x(i-1), ue(i-1), x(i), ue(i));
     theta(i) = sqrt(f2 * (0.45/Re_l) / (ue(i)^6));
@@ -52,6 +53,7 @@ while laminar && i < n
         laminar = false;
         ils = x(i);
         Re_thetals = Re_theta(i);
+   
     end
 end
 

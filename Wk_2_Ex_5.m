@@ -1,6 +1,7 @@
 clear
 
 global Re ue0 duedx;
+
 Re = 10^8;
 duedx = -0.6;
 ue0 = 1;

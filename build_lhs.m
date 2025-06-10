@@ -22,11 +22,11 @@ function lhsmat = build_lhs(xs,ys)
     lhsmat = zeros(np+1,np+1);
 
     % Original Kutta condition:
-    % lhsmat(1,1) = 1;
-    % lhsmat(np+1,np+1) = 1;
+    lhsmat(1,1) = 1;
+    lhsmat(np+1,np+1) = 1;
     
-    lhsmat(1, [1:3,np-1:np]) = [1, -1, 0.5, -0.5, 1];  
-    lhsmat(np+1, [2:3,np-1:np+1]) = [1, -0.5, 0.5, -1, 1];  
+    %lhsmat(1, [1:3,np-1:np]) = [1, -1, 0.5, -0.5, 1];  
+    %lhsmat(np+1, [2:3,np-1:np+1]) = [1, -0.5, 0.5, -1, 1];  
     
     
     for i=2:np

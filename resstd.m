@@ -3,7 +3,7 @@
 %  Van de Vooren geometry parameters, see vdvfoil.m.
 
 %  free-stream incidence
-alpha = 0; %pi/12;
+alpha = pi/12;
 
 %  Van de Vooren geometry and pressure distribution
 npin = 2000;

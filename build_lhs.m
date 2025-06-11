@@ -1,13 +1,17 @@
 function lhsmat = build_lhs(xs,ys)
+    %build_lhs Obtains the lhs of the streamfunction and gamma equation
+    %   
+    
     np = length(xs) - 1;
-    psip = zeros(np,np+1);
+    psip = zeros(np,np+1); %Initialise matrix to reduce computation times
     
     for i=1:np
         for j=1:np+1    
+                
                 if j == 1 
                     [infa,infb] = panelinf(xs(j),ys(j),xs(j+1),ys(j+1),xs(i),ys(i));
                     psip(i,j) = infa;
-                elseif j == np+1
+                elseif j == np+1 %Accounts for index out of bounds
                     [infa1,infb1] = panelinf(xs(j-1),ys(j-1),xs(j),ys(j),xs(i),ys(i));
                     psip(i,j) = infb1;
                 else
@@ -16,17 +20,18 @@ function lhsmat = build_lhs(xs,ys)
                     psip(i,j) = infa + infb1;
                 end
         end
-    end %Looping over all the points around the cylinder measuring the contribution from each point vortex to a single point on the cylinder
+    end %Looping over all the points around the cylinder measuring the contribution from each`point vortex onto one single point of the cylinder
     
     %Kutta Condition
+    
     lhsmat = zeros(np+1,np+1);
 
     % Original Kutta condition:
-    lhsmat(1,1) = 1;
-    lhsmat(np+1,np+1) = 1;
+    % lhsmat(1,1) = 1;
+    % lhsmat(np+1,np+1) = 1;
     
-    %lhsmat(1, [1:3,np-1:np]) = [1, -1, 0.5, -0.5, 1];  
-    %lhsmat(np+1, [2:3,np-1:np+1]) = [1, -0.5, 0.5, -1, 1];  
+    lhsmat(1, [1:3,np-1:np]) = [1, -1, 0.5, -0.5, 1];  
+    lhsmat(np+1, [2:3,np-1:np+1]) = [1, -0.5, 0.5, -1, 1];  
     
     
     for i=2:np

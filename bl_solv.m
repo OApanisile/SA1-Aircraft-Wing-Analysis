@@ -1,4 +1,3 @@
-
 function [int, ils, itr, its, delstar, theta] = bl_solv(x,cp)
 
     global Re ue0 duedx
@@ -12,13 +11,14 @@ function [int, ils, itr, its, delstar, theta] = bl_solv(x,cp)
         duedxov(i) = (ue(i) - ue(i-1))/(x(i) - x(i-1));
     end
 
-    f = 0;
-    
+    f = ueintbit(0, 0, x(1), ue(1));
+
     m = zeros(size(x));
     H = zeros(size(x));
     He = zeros(size(x));
 
     theta = zeros(size(x));
+    theta(1) = sqrt(f * (0.45/Re) / (ue(1)^6));
     Re_theta = zeros(size(x));
     deltae = zeros(size(x));
     delstar = zeros(size(x));
@@ -58,15 +58,15 @@ function [int, ils, itr, its, delstar, theta] = bl_solv(x,cp)
     
     deltae = He .* theta;
     
-    
     while its == 0 && i < n
-        ue0 = ue(i);
-        duedx = duedxov(i);
         thick0(1) = theta(i);
         thick0(2) = deltae(i);
+        ue0 = ue(i);
+
         i = i + 1;
+        duedx = duedxov(i);
     
-        [delx, thickhist] = ode45(@thickdash,[0, x(i) - x(i-1)],thick0);
+        [~, thickhist] = ode45(@thickdash,[0, x(i) - x(i-1)],thick0);
     
         theta(i) = thickhist(end,1);
         deltae(i) = thickhist(end,2);
@@ -101,3 +101,6 @@ function [int, ils, itr, its, delstar, theta] = bl_solv(x,cp)
     end
 end
 
+% There is an error in theta such that camber solution is wrong but
+% thickness is correct. Error exists from first panel onwards (bl analyser
+% works - something deeper at play.

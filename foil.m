@@ -3,7 +3,6 @@
 %  Script to analyse an aerofoil section using potential flow calculation
 %  and boundary layer solver.
 %
-%  [xk yk] = naca4('')
 
 clear
 close all
@@ -19,7 +18,6 @@ fprintf(1, '%s\n\n', ['Reading in parameter file: ' parfile])
 %  Read in the section geometry
 secfile = ['Geometry/' section '.surf'];
 [xk yk] = textread ( secfile, '%f%f' );
-
 
 %  Generate high-resolution surface description via cubic splines
 nphr = 5*np;

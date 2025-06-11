@@ -1,6 +1,9 @@
-function rhsvec = build_rhs(xs,ys,alpha)     
-    np = length(xs) - 1; %Number of panels we are dividing the cylinder into
-    rhsvec = zeros(np+1,1);
+function rhsvec = build_rhs(xs,ys,alpha) 
+    %build_rhs Obtains the rhs the Streamfunction and gamma equation
+    %   Detailed explanation goes here
+    
+    np = length(xs) - 1; %Number of points we are dividing the cylinder into
+    rhsvec = zeros(np+1,1); %Initialise the vector to reduce computation times
     psi = zeros(np+1,1);
     
     for i = 1:np+1
